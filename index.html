@@ -1,1 +1,416 @@
 
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#07110d">
+<title>TITAN FLOW V2</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#07110d;color:#eef8f1;font-family:Arial,sans-serif;padding:16px}
+header{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid #244c39}
+.logo{font-size:23px;font-weight:900;letter-spacing:2px;color:#35d399}
+.status{font-size:10px;color:#35d399}
+h2{font-size:17px;margin:25px 0 12px}
+.card{background:#101d17;border:1px solid #244c39;border-radius:14px;padding:16px;margin-bottom:13px}
+.muted{font-size:11px;color:#91a79a}
+.balance{font-size:30px;color:#35d399;font-weight:bold;margin:9px 0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.value{font-size:21px;margin-top:8px}
+select,input{width:100%;padding:13px;margin-top:8px;background:#07110d;border:1px solid #315d45;border-radius:8px;color:white}
+button{border:0;border-radius:8px;padding:13px;font-weight:bold;cursor:pointer;margin-top:12px;width:100%}
+.green{background:#35d399;color:#07110d}
+.dark{background:#1a3024;color:#35d399}
+button:disabled{opacity:.5}
+.price{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #244c39;font-size:13px}
+.good{color:#35d399}
+.warn{color:#e8bb65}
+.bad{color:#ff7777}
+#analysis{line-height:1.8;font-size:13px;margin-top:12px}
+.chart{height:190px;display:flex;align-items:flex-end;gap:5px;padding:15px 3px 5px;border-bottom:1px solid #315d45;overflow:hidden}
+.candle{flex:1;position:relative;min-width:5px;height:100%}
+.wick{position:absolute;width:2px;left:50%;transform:translateX(-50%)}
+.body{position:absolute;width:70%;left:15%;min-height:3px;border-radius:2px}
+.up{background:#35d399}
+.down{background:#ef7777}
+table{width:100%;border-collapse:collapse;font-size:11px}
+td,th{padding:10px 4px;border-bottom:1px solid #244c39;text-align:left}
+.footer{text-align:center;color:#789082;font-size:10px;padding:25px 0}
+.tag{display:inline-block;padding:5px 8px;border-radius:5px;background:#193426;color:#35d399;font-size:10px}
+</style>
+</head>
+<body>
+
+<header>
+ <div>
+  <div class="logo">TITAN FLOW</div>
+  <div class="muted">TRADE THE FLOW.</div>
+ </div>
+ <div class="status">● V2 SYSTEM</div>
+</header>
+
+<h2>Trading Dashboard</h2>
+
+<div class="card">
+ <div class="muted">VIRTUAL DEMO BALANCE</div>
+ <div class="balance" id="balance">$10,000.00</div>
+ <span class="tag">SIMULATION ONLY</span>
+</div>
+
+<div class="grid">
+ <div class="card">
+  <div class="muted">OPEN DEMO TRADES</div>
+  <div class="value" id="openCount">0</div>
+ </div>
+ <div class="card">
+  <div class="muted">DEMO PROFIT / LOSS</div>
+  <div class="value" id="totalPL">$0.00</div>
+ </div>
+</div>
+
+<h2>Market Watch</h2>
+<div class="card">
+ <div class="price"><span>EURUSD</span><strong id="eurusd">Loading...</strong></div>
+ <div class="price"><span>GBPUSD</span><strong id="gbpusd">Loading...</strong></div>
+ <div class="price"><span>XAUUSD</span><strong id="xauusd">Loading...</strong></div>
+ <p class="muted" id="feedStatus">Checking market-data feed...</p>
+ <button class="dark" onclick="updatePrices()">REFRESH PRICES</button>
+</div>
+
+<h2>Market Analysis</h2>
+<div class="card">
+ <label class="muted">SELECT MARKET</label>
+ <select id="pair">
+  <option>EURUSD</option>
+  <option>GBPUSD</option>
+  <option>XAUUSD</option>
+ </select>
+
+ <label class="muted">TIMEFRAME</label>
+ <select id="timeframe">
+  <option value="5m">M5</option>
+  <option value="15m">M15</option>
+  <option value="30m">M30</option>
+  <option value="1h">H1</option>
+  <option value="4h">H4</option>
+ </select>
+
+ <button class="green" onclick="analyse()">ANALYSE MARKET</button>
+ <div id="analysis">Select a market and analyse to load candle observations.</div>
+</div>
+
+<h2>Candlestick Chart</h2>
+<div class="card">
+ <div class="muted" id="chartTitle">MARKET CANDLES</div>
+ <div class="chart" id="chart">
+  <span class="muted">Load candle data to view chart.</span>
+ </div>
+ <p class="muted">Illustrative chart from returned candle data. Not an execution chart.</p>
+</div>
+
+<h2>Demo Trading Simulator</h2>
+<div class="card">
+ <span class="tag">PAPER TRADING ONLY</span>
+ <label class="muted">DIRECTION</label>
+ <select id="side">
+  <option value="BUY">BUY</option>
+  <option value="SELL">SELL</option>
+ </select>
+
+ <label class="muted">ENTRY PRICE</label>
+ <input id="entry" type="number" step="any" placeholder="Enter demo entry price">
+
+ <label class="muted">STOP LOSS</label>
+ <input id="sl" type="number" step="any" placeholder="Enter demo stop loss">
+
+ <label class="muted">TAKE PROFIT</label>
+ <input id="tp" type="number" step="any" placeholder="Enter demo take profit">
+
+ <button class="green" onclick="openDemoTrade()">OPEN DEMO TRADE</button>
+ <p class="muted" id="tradeMessage">No demo trades opened.</p>
+</div>
+
+<h2>Demo Trade History</h2>
+<div class="card">
+ <div style="overflow-x:auto">
+ <table>
+  <thead>
+   <tr><th>PAIR</th><th>SIDE</th><th>ENTRY</th><th>STATUS</th><th>P/L</th></tr>
+  </thead>
+  <tbody id="history">
+   <tr><td colspan="5">No trades yet.</td></tr>
+  </tbody>
+ </table>
+ </div>
+ <button class="dark" onclick="clearHistory()">RESET DEMO ACCOUNT</button>
+</div>
+
+<h2>System Controls</h2>
+<div class="card">
+ <p class="muted">Automated order execution: DISABLED</p>
+ <p class="muted">Live account connection: LOCKED</p>
+ <p class="muted">Market analysis: MANUAL</p>
+ <span class="tag">EDUCATIONAL DEMO</span>
+</div>
+
+<div class="footer">
+ TITAN FLOW V2 • TRADE THE FLOW.<br>
+ Market data may be delayed, stale or unavailable.<br>
+ No real orders are sent. Demo results are simulated.
+</div>
+
+<script>
+const API = "https://biquote.io/api/";
+let prices = {};
+let candles = [];
+let trades = [];
+let balance = 10000;
+let totalPL = 0;
+
+const money = n => "$" + Number(n).toFixed(2);
+
+async function getPrice(symbol) {
+ const response = await fetch(API + symbol);
+ if (!response.ok) throw new Error("Price unavailable");
+ return await response.json();
+}
+
+async function updatePrices() {
+ const status = document.getElementById("feedStatus");
+ status.textContent = "Checking quotes...";
+
+ for (const symbol of ["EURUSD","GBPUSD","XAUUSD"]) {
+  const element = document.getElementById(symbol.toLowerCase());
+
+  try {
+   const data = await getPrice(symbol);
+   const fresh = !data.stale &&
+     data.marketState === "open" &&
+     Number.isFinite(Number(data.mid));
+
+   if (fresh) {
+    prices[symbol] = Number(data.mid);
+    element.textContent = Number(data.mid).toFixed(
+     symbol === "XAUUSD" ? 2 : 5
+    );
+    element.className = "good";
+   } else {
+    element.textContent = "Stale / market closed";
+    element.className = "warn";
+   }
+  } catch(error) {
+   element.textContent = "Unavailable";
+   element.className = "bad";
+  }
+ }
+
+ status.textContent = "Quote freshness checked. Old quotes are not treated as live.";
+ updateTradeDisplay();
+}
+
+async function analyse() {
+ const pair = document.getElementById("pair").value;
+ const interval = document.getElementById("timeframe").value;
+ const output = document.getElementById("analysis");
+
+ output.textContent = "Loading candle data...";
+ document.getElementById("chartTitle").textContent =
+  pair + " • " + interval.toUpperCase();
+
+ try {
+  const response = await fetch(
+   API + pair + "/ohlc?interval=" + interval + "&limit=30"
+  );
+
+  if (!response.ok) throw new Error("Candle feed unavailable");
+
+  const data = await response.json();
+  if (!Array.isArray(data.bars)) throw new Error("Unexpected candle data");
+
+  candles = data.bars
+   .filter(bar => !bar.isOpen)
+   .map(bar => ({
+    open:Number(bar.open),
+    high:Number(bar.high),
+    low:Number(bar.low),
+    close:Number(bar.close)
+   }));
+
+  if (candles.length < 3) throw new Error("Not enough closed candles");
+
+  const previous = candles[candles.length - 2];
+  const latest = candles[candles.length - 1];
+  const recent = candles.slice(-10);
+
+  const highest = Math.max(...recent.map(b => b.high));
+  const lowest = Math.min(...recent.map(b => b.low));
+
+  let observation = "Price remains inside the previous candle range.";
+
+  if (latest.high > previous.high && latest.close <= previous.high) {
+   observation = "Possible upper range sweep.";
+  } else if (latest.low < previous.low && latest.close >= previous.low) {
+   observation = "Possible lower range sweep.";
+  } else if (latest.close > previous.high) {
+   observation = "Latest candle closed above previous range.";
+  } else if (latest.close < previous.low) {
+   observation = "Latest candle closed below previous range.";
+  }
+
+  const direction = latest.close > latest.open
+   ? "Bullish candle"
+   : latest.close < latest.open
+   ? "Bearish candle"
+   : "Neutral candle";
+
+  output.innerHTML =
+   "<strong>" + pair + " " + interval.toUpperCase() + "</strong><br>" +
+   "Candle direction: " + direction + "<br>" +
+   "Recent 10-candle high: " + highest + "<br>" +
+   "Recent 10-candle low: " + lowest + "<br>" +
+   "Previous range high: " + previous.high + "<br>" +
+   "Previous range low: " + previous.low + "<br>" +
+   "<strong>CRT observation:</strong> " + observation +
+   "<br><small>Educational observation, not a trading signal.</small>";
+
+  drawChart(candles.slice(-25));
+ } catch(error) {
+  output.textContent = "Analysis unavailable: " + error.message;
+  document.getElementById("chart").textContent =
+   "Candle chart unavailable.";
+ }
+}
+
+function drawChart(data) {
+ const chart = document.getElementById("chart");
+ chart.innerHTML = "";
+
+ const min = Math.min(...data.map(b => b.low));
+ const max = Math.max(...data.map(b => b.high));
+ const range = max - min || 1;
+
+ data.forEach(bar => {
+  const item = document.createElement("div");
+  item.className = "candle";
+
+  const up = bar.close >= bar.open;
+  const color = up ? "up" : "down";
+
+  const wickTop = (max - bar.high) / range * 100;
+  const wickHeight = (bar.high - bar.low) / range * 100;
+  const bodyTop = (max - Math.max(bar.open,bar.close)) / range * 100;
+  const bodyHeight = Math.abs(bar.close - bar.open) / range * 100;
+
+  item.innerHTML =
+   '<div class="wick ' + color + '" style="top:' +
+   wickTop + '%;height:' + wickHeight + '%"></div>' +
+   '<div class="body ' + color + '" style="top:' +
+   bodyTop + '%;height:' + Math.max(bodyHeight,2) + '%"></div>';
+
+  chart.appendChild(item);
+ });
+}
+
+function openDemoTrade() {
+ const pair = document.getElementById("pair").value;
+ const side = document.getElementById("side").value;
+ const entry = Number(document.getElementById("entry").value);
+ const sl = Number(document.getElementById("sl").value);
+ const tp = Number(document.getElementById("tp").value);
+ const message = document.getElementById("tradeMessage");
+
+ if (![entry,sl,tp].every(Number.isFinite) ||
+     entry <= 0 || sl <= 0 || tp <= 0) {
+  message.textContent = "Enter valid positive demo prices.";
+  return;
+ }
+
+ const valid = side === "BUY"
+  ? sl < entry && tp > entry
+  : sl > entry && tp < entry;
+
+ if (!valid) {
+  message.textContent = "Check your demo SL and TP direction.";
+  return;
+ }
+
+ trades.push({
+  pair,side,entry,sl,tp,status:"OPEN",pl:0
+ });
+
+ message.textContent = "Demo trade recorded. No real order was sent.";
+ renderTrades();
+}
+
+function updateTradeDisplay() {
+ trades.forEach(trade => {
+  if (trade.status !== "OPEN") return;
+
+  const current = prices[trade.pair];
+  if (!Number.isFinite(current)) return;
+
+  if ((trade.side === "BUY" && current <= trade.sl) ||
+      (trade.side === "SELL" && current >= trade.sl)) {
+   closeDemo(trade,"SIMULATED SL");
+  } else if ((trade.side === "BUY" && current >= trade.tp) ||
+             (trade.side === "SELL" && current <= trade.tp)) {
+   closeDemo(trade,"SIMULATED TP");
+  } else {
+   trade.pl = trade.side === "BUY"
+    ? current - trade.entry
+    : trade.entry - current;
+  }
+ });
+
+ renderTrades();
+}
+
+function closeDemo(trade,status) {
+ trade.status = status;
+ totalPL += trade.pl;
+}
+
+function renderTrades() {
+ const open = trades.filter(t => t.status === "OPEN").length;
+ document.getElementById("openCount").textContent = open;
+ document.getElementById("totalPL").textContent = money(totalPL);
+ document.getElementById("balance").textContent = money(balance + totalPL);
+
+ const history = document.getElementById("history");
+ history.innerHTML = "";
+
+ if (!trades.length) {
+  history.innerHTML = '<tr><td colspan="5">No trades yet.</td></tr>';
+  return;
+ }
+
+ trades.forEach(t => {
+  const row = document.createElement("tr");
+  [t.pair,t.side,t.entry.toString(),t.status,t.pl.toFixed(5)]
+   .forEach(value => {
+    const cell = document.createElement("td");
+    cell.textContent = value;
+    row.appendChild(cell);
+   });
+  history.appendChild(row);
+ });
+}
+
+function clearHistory() {
+ if (!confirm("Reset your virtual demo account?")) return;
+ trades = [];
+ balance = 10000;
+ totalPL = 0;
+ renderTrades();
+ document.getElementById("tradeMessage").textContent =
+  "Demo account reset.";
+}
+
+updatePrices();
+setInterval(updatePrices,30000);
+</script>
+
+</body>
+</html>
